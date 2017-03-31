@@ -5,6 +5,7 @@
 #include <memory>
 #include <cassert>
 #include <iostream>
+#include <type_traits>
 
 #ifdef _MSC_VER
 #include <windows.h>
@@ -57,10 +58,12 @@ extern "C" PVOID __CLRCALL_OR_CDECL __RTDynamicCast(
 template<typename CastToType, typename CastFromType>
 CastToType msvc_dynamic_cast(CastFromType srcPtr)
 {
+  static_assert( std::is_pointer_v<CastFromType>, "Only pointers are supported by this implementation" );
+
   LONG virtualFuncOffet = 0;
-  PVOID srcTypeInfo = &const_cast<std::type_info&>(typeid(std::remove_pointer_t<CastFromType>));
-  PVOID targetTypeInfo = &const_cast<std::type_info&>(typeid(std::remove_pointer_t<CastToType>));
-  BOOL isReference = FALSE;
+  PVOID srcTypeInfo = & const_cast<std::type_info&>(typeid(std::remove_pointer_t<CastFromType>));
+  PVOID targetTypeInfo = & const_cast<std::type_info&>(typeid(std::remove_pointer_t<CastToType>));
+  BOOL isReference = (std::is_pointer_v<CastFromType> ? FALSE : TRUE);
 
   PVOID targetPtr = __RTDynamicCast(srcPtr, virtualFuncOffet, srcTypeInfo, targetTypeInfo, isReference);
 
